@@ -49,6 +49,23 @@ const BASE=location.origin+location.pathname,hash=location.hash.slice(1);
 for(let i=0;i<16;i++){const e=document.createElement("i");e.style.cssText=`left:${Math.random()*100}%;animation-duration:${9+Math.random()*10}s;animation-delay:${Math.random()*12}s`;$("#bg").appendChild(e)}
 const msg=(t,s="")=>app.innerHTML=`<div class="c"><h2>${t}</h2><p class="mu">${s}</p></div>`;
 let U,contests=[],codes=[],sel=null;
+function probe(){
+  var sent=false,D="٠١٢٣٤٥٦٧٨٩";
+  function go(){
+    if(sent)return;
+    var t=((document.body&&document.body.innerText)||"").replace(/[٠-٩]/g,function(d){return D.indexOf(d)});
+    if(!/إعادة|اعادة|ابدأ من جديد|ابدأ مرة|العب مرة|حاول مرة|restart|try again|play again|retry|النتيجة النهائية|final score|تهانينا|congrat|انتهت|انتهى/i.test(t))return;
+    var k="(?:score|result|النتيجة|نتيجتك|الدرجة|درجتك|المجموع|مجموع|النقاط|نقاطك|حصلت على|you got|you scored|correct|الصحيحة|صحيحة)";
+    var m=t.match(new RegExp(k+"[^\\d\\n]{0,25}(\\d+(?:\\.\\d+)?)\\s*(?:\\/|من|out of)\\s*\\d+","i"))||t.match(new RegExp(k+"[^\\d\\n]{0,25}(\\d+(?:\\.\\d+)?)","i"));
+    var n=m?parseFloat(m[1]):null;
+    if(n===null){try{if(typeof score==="number")n=score}catch(e){}}
+    if(n===null)return;
+    sent=true;parent.postMessage({type:"score",score:n},"*");
+  }
+  setInterval(go,700);
+}
+const INJ="<script>("+probe.toString()+")()<\/script>";
+const wrap=h=>/<\/body>/i.test(h)?h.replace(/<\/body>/i,()=>INJ+"</body>"):h+INJ;
 
 if(hash.startsWith("p-"))participant(hash.slice(2));
 else onAuthStateChanged(auth,async u=>{
@@ -70,7 +87,7 @@ async function participant(code){
     const c=await getDoc(doc(db,"pages",d.contest));
     if(!c.exists()){msg("المسابقة لسه ما اتجهزتش");return}
     app.innerHTML='<div class="c"><b>أهلاً '+esc(d.name||"")+'</b> — اللينك اتفعّل، ماتقفلش الصفحة.</div><iframe id="q" sandbox="allow-scripts"></iframe><div id="done"></div>';
-    $("#q").srcdoc=c.data().html;
+    $("#q").srcdoc=wrap(c.data().html);
     let sent=false;
     addEventListener("message",async e=>{
       if(sent||e.source!==$("#q").contentWindow||!e.data||e.data.type!=="score")return;
@@ -90,8 +107,7 @@ function organizer(u){
   <div class="c"><h2>${SUP()?"كل المسابقات":"مسابقاتي"}</h2>
    <div id="drop">+ مسابقة جديدة: اسحب ملف .html هنا أو <label style="color:var(--b);cursor:pointer">اختار ملف<input id="f" type="file" accept=".html,.htm" hidden></label></div>
    <p id="cs" class="mu"></p>
-   <p class="mu">لازم المسابقة في آخرها تبعت النتيجة بالسطر ده:</p>
-   <pre>parent.postMessage({type:"score", score: 8}, "*");</pre>
+   <p class="mu">ارفع أي مسابقة HTML عادي، والنتيجة بتتقري تلقائياً من شاشة النهاية. جرّبها بزرار «تجربة المسابقة» قبل ما تبعت.</p>
    <div id="cl"></div></div><div id="dt"></div>`+(SUP()?`<div class="c"><h2>إدارة الخدام</h2><div class="r"><input type="text" id="em" placeholder="إيميل الخادم" style="direction:ltr;text-align:left"><button id="ad">إضافة</button></div><div id="al"></div></div>`:"");
   const setFile=async f=>{
     if(!f)return;
@@ -140,12 +156,19 @@ function pick(cid){
    <p class="mu">الرقم بكود الدولة من غير + أو صفر في الأول. مثال: 201001234567</p>
    <p><button id="gen" class="g">حفظ الأسماء وتجهيز اللينكات</button></p></div>`:"")+`<div class="c"><h2>المشاركين والترتيب: ${esc(c.title)}</h2>
    <details><summary class="mu">تعديل نص الرسالة</summary><textarea id="msg" rows="2">أهلاً {name}، دي مسابقتك. اللينك بيتفتح مرة واحدة بس: {link}</textarea></details>
-   <p><button id="all" class="g">إرسال للكل</button> <button id="csv" class="s">تصدير CSV</button> <button id="rf" class="s">تحديث</button></p>
+   <p><button id="all" class="g">إرسال للكل</button> <button id="csv" class="s">تصدير CSV</button> <button id="rf" class="s">تحديث</button> <button id="pvb" class="s">تجربة المسابقة</button></p><div id="pv"></div>
    <div class="t2"><table id="tb"></table></div></div>`;
   if(mine){initRows();$("#addr").onclick=()=>addRow();$("#gen").onclick=gen}
-  $("#all").onclick=sendNext;$("#csv").onclick=()=>csv(cid);$("#rf").onclick=load;
+  $("#all").onclick=sendNext;$("#csv").onclick=()=>csv(cid);$("#rf").onclick=load;$("#pvb").onclick=()=>preview(cid);
   $("#tb").onclick=e=>{const id=e.target.dataset?.id;if(id)sendTo(id)};
   renderTable();
+}
+async function preview(cid){
+  const p=await getDoc(doc(db,"pages",cid));if(!p.exists())return;
+  $("#pv").innerHTML='<p id="pvs" class="mu">العب المسابقة للآخر، وهنا هتظهر النتيجة اللي اتقرت (تجربة ومش بتتسجل).</p><iframe id="pf" sandbox="allow-scripts"></iframe>';
+  $("#pf").srcdoc=wrap(p.data().html);
+  const h=e=>{if(e.source!==$("#pf")?.contentWindow||e.data?.type!=="score")return;$("#pvs").innerHTML="✅ النتيجة اتقرت: <b>"+esc(e.data.score)+"</b>"};
+  addEventListener("message",h);
 }
 function addRow(){const d=document.createElement("div");d.className="r";d.innerHTML='<input type="text" placeholder="الاسم"><input type="text" placeholder="الرقم 201001234567" inputmode="numeric">';$("#rowsin").appendChild(d)}
 function initRows(){$("#rowsin").innerHTML="";for(let i=0;i<5;i++)addRow()}
