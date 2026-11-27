@@ -200,12 +200,14 @@ function pick(cid){
    <p><button id="addr" class="s">+ إضافة صف</button></p>
    <p class="mu">الرقم بكود الدولة من غير + أو صفر في الأول. مثال: 201001234567</p>
    <p><button id="gen" class="g">حفظ الأسماء وتجهيز اللينكات</button></p></div>`:"")+`<div class="c"><h2>المشاركين والترتيب: ${esc(c.title)}</h2>
-   ${mine&&c.mode==="resume"?`<p class="r"><input type="datetime-local" id="ned" value="${c.closeAt?toLI(c.closeAt):""}"><button id="sed" class="s">تحديث وقت القفل</button></p>`:""}
+   ${mine?`<div class="r" style="flex-wrap:wrap"><select id="nmd" style="padding:8px;border-radius:9px;border:1px solid var(--bd);font:inherit"><option value="once"${c.mode!=="resume"?" selected":""}>تفتح مرة واحدة فقط</option><option value="resume"${c.mode==="resume"?" selected":""}>تفتح أكتر من مرة + وقت قفل</option></select><input type="datetime-local" id="ned" value="${c.closeAt?toLI(c.closeAt):""}"><button id="sed" class="s">حفظ الإعدادات</button></div>`:""}
    <details><summary class="mu">تعديل نص الرسالة</summary><textarea id="msg" rows="2">${c.mode==="resume"?(c.closeAt?"أهلاً {name}، دي مسابقتك. تقدر تفتح اللينك أكتر من مرة وتكمّل، والمسابقة بتقفل {close}: {link}":"أهلاً {name}، دي مسابقتك. تقدر تفتح اللينك أكتر من مرة وتكمّل: {link}"):"أهلاً {name}، دي مسابقتك. اللينك بيتفتح مرة واحدة بس: {link}"}</textarea></details>
    <p><button id="all" class="g">إرسال للكل</button> <button id="csv" class="s">تصدير CSV</button> <button id="rf" class="s">تحديث</button> <button id="pvb" class="s">تجربة المسابقة</button></p><div id="pv"></div>
    <div class="t2"><table id="tb"></table></div></div>`;
   if(mine){initRows();$("#addr").onclick=()=>addRow();$("#gen").onclick=gen}
-  if($("#sed"))$("#sed").onclick=async()=>{const t=new Date($("#ned").value).getTime();if(!isFinite(t)){alert("حدّد التاريخ والوقت");return}try{await updateDoc(doc(db,"contests",cid),{closeAt:t});await updateDoc(doc(db,"pages",cid),{closeAt:t});await load();pick(cid)}catch(e){alert("فشل التحديث")}};
+  if($("#sed")){const sync=()=>{$("#ned").style.display=$("#nmd").value==="resume"?"":"none"};$("#nmd").onchange=sync;sync();
+  $("#sed").onclick=async()=>{const m=$("#nmd").value;let closeAt=0;if(m==="resume"){closeAt=new Date($("#ned").value).getTime();if(!isFinite(closeAt)){alert("حدّد التاريخ والوقت");return}}
+    try{await updateDoc(doc(db,"contests",cid),{mode:m,closeAt});await updateDoc(doc(db,"pages",cid),{mode:m,closeAt});await load();pick(cid)}catch(e){alert("فشل التحديث")}}}
   $("#all").onclick=sendNext;$("#csv").onclick=()=>csv(cid);$("#rf").onclick=load;$("#pvb").onclick=()=>preview(cid);
   $("#tb").onclick=e=>{const id=e.target.dataset?.id;if(id)sendTo(id)};
   renderTable();
