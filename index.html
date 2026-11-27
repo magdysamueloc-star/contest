@@ -49,12 +49,21 @@ const BASE=location.origin+location.pathname,hash=location.hash.slice(1);
 for(let i=0;i<16;i++){const e=document.createElement("i");e.style.cssText=`left:${Math.random()*100}%;animation-duration:${9+Math.random()*10}s;animation-delay:${Math.random()*12}s`;$("#bg").appendChild(e)}
 const msg=(t,s="")=>app.innerHTML=`<div class="c"><h2>${t}</h2><p class="mu">${s}</p></div>`;
 let U,contests=[],codes=[],sel=null;
-function probe(){
-  var sent=false,D="٠١٢٣٤٥٦٧٨٩";
-  function go(){
+function probe(cfg){
+  var sent=false,D="٠١٢٣٤٥٦٧٨٩",log=cfg.log.slice(),rep=false,tm;
+  function path(el){var p=[];while(el&&el!==document.body&&el.parentNode){p.unshift(Array.prototype.indexOf.call(el.parentNode.children,el));el=el.parentNode}return p.join(".")}
+  function find(p){var el=document.body,a=p===""?[]:p.split(".");for(var i=0;i<a.length;i++)el=el&&el.children[+a[i]];return el}
+  function save(){clearTimeout(tm);tm=setTimeout(function(){parent.postMessage({type:"log",log:log},"*")},500)}
+  if(cfg.rec){
+    document.addEventListener("click",function(e){if(rep)return;log.push({t:"c",p:path(e.target)});save()},true);
+    document.addEventListener("input",function(e){var el=e.target;if(rep||!/INPUT|TEXTAREA/.test(el.tagName)||el.type==="radio"||el.type==="checkbox")return;var p=path(el);for(var i=log.length-1;i>=0;i--)if(log[i].t==="i"&&log[i].p===p){log.splice(i,1);break}log.push({t:"i",p:p,v:el.value});save()},true);
+    document.addEventListener("change",function(e){var el=e.target;if(rep||el.tagName!=="SELECT")return;log.push({t:"s",p:path(el),v:el.value});save()},true);
+    if(log.length){rep=true;var i=0;setTimeout(function step(){if(i>=log.length){rep=false;return}var ev=log[i++],el=find(ev.p);try{if(el){if(ev.t==="c")el.click();else{el.value=ev.v;el.dispatchEvent(new Event(ev.t==="i"?"input":"change",{bubbles:true}))}}}catch(x){}setTimeout(step,250)},800)}
+  }
+  function go(force){
     if(sent)return;
     var t=((document.body&&document.body.innerText)||"").replace(/[٠-٩]/g,function(d){return D.indexOf(d)});
-    if(!/إعادة|اعادة|ابدأ من جديد|ابدأ مرة|العب مرة|حاول مرة|restart|try again|play again|retry|النتيجة النهائية|final score|تهانينا|congrat|انتهت|انتهى/i.test(t))return;
+    if(force!==true&&!/إعادة|اعادة|ابدأ من جديد|ابدأ مرة|العب مرة|حاول مرة|restart|try again|play again|retry|النتيجة النهائية|final score|تهانينا|congrat|انتهت|انتهى/i.test(t))return;
     var k="(?:score|result|النتيجة|نتيجتك|الدرجة|درجتك|المجموع|مجموع|النقاط|نقاطك|حصلت على|you got|you scored|correct|الصحيحة|صحيحة)";
     var m=t.match(new RegExp(k+"[^\\d\\n]{0,25}(\\d+(?:\\.\\d+)?)\\s*(?:\\/|من|out of)\\s*\\d+","i"))||t.match(new RegExp(k+"[^\\d\\n]{0,25}(\\d+(?:\\.\\d+)?)","i"));
     var n=m?parseFloat(m[1]):null;
@@ -63,18 +72,9 @@ function probe(){
     sent=true;parent.postMessage({type:"score",score:n},"*");
   }
   setInterval(go,700);
+  addEventListener("message",function(e){if(e.data&&e.data.type==="force")go(true)});
 }
-const INJ="<script>("+probe.toString()+")()<\/script>";
-const wrap=h=>/<\/body>/i.test(h)?h.replace(/<\/body>/i,()=>INJ+"</body>"):h+INJ;
-
-if(hash.startsWith("p-"))participant(hash.slice(2));
-else onAuthStateChanged(auth,async u=>{
-  if(!u){app.innerHTML='<div class="c"><h2>دخول الخدام</h2><p><button id="in">دخول بجوجل</button></p></div>';$("#in").onclick=()=>signInWithPopup(auth,new GoogleAuthProvider());return}
-  let ok=u.email===SUPER;
-  if(!ok){try{ok=(await getDoc(doc(db,"allowed",u.email))).exists()}catch(e){}}
-  if(ok)organizer(u);
-  else{msg("حسابك لسه مش مفعّل","ابعت الإيميل ده للمسؤول عشان يفعّله: "+esc(u.email));}
-});
+const wrap=(h,log,rec)=>{const cfg=JSON.stringify({log:log||[],rec:!!rec}).replace(/</g,"\\u003c"),S="<script>("+probe.toString()+")("+cfg+")<\/script>";return /<\/body>/i.test(h)?h.replace(/<\/body>/i,()=>S+"</body>"):h+S};
 
 /* ---------- المشارك ---------- */
 async function participant(code){
@@ -83,18 +83,44 @@ async function participant(code){
     if(!s.exists()){msg("كود غير صحيح");return}
     const d=s.data();
     if(d.score!=null){msg("انت خلّصت المسابقة قبل كده");return}
-    try{await updateDoc(ref,{startedAt:Date.now()})}catch(e){msg("اللينك ده اتفتح قبل كده","المسابقة بتتفتح مرة واحدة فقط.");return}
     const c=await getDoc(doc(db,"pages",d.contest));
     if(!c.exists()){msg("المسابقة لسه ما اتجهزتش");return}
-    app.innerHTML='<div class="c"><b>أهلاً '+esc(d.name||"")+'</b> — اللينك اتفعّل، ماتقفلش الصفحة.</div><iframe id="q" sandbox="allow-scripts"></iframe><div id="done"></div>';
-    $("#q").srcdoc=wrap(c.data().html);
-    let sent=false;
-    addEventListener("message",async e=>{
-      if(sent||e.source!==$("#q").contentWindow||!e.data||e.data.type!=="score")return;
-      const n=Number(e.data.score);if(!isFinite(n))return;
-      sent=true;
-      try{await updateDoc(ref,{score:n,finishedAt:Date.now()});$("#done").innerHTML='<div class="c"><h2>تم تسجيل نتيجتك: '+esc(n)+'</h2><p class="mu">أول محاولة هي اللي بتتحسب، والإعادة للتدريب فقط.</p></div>'}
+    const pg=c.data(),resume=pg.mode==="resume",lim=(pg.limit||0)*60000;
+    let st=d.startedAt;
+    if(!(resume&&st)){
+      try{st=Date.now();await updateDoc(ref,{startedAt:st})}catch(e){msg("اللينك ده اتفتح قبل كده","المسابقة بتتفتح مرة واحدة فقط.");return}
+    }
+    const rem=lim?lim-(Date.now()-st):Infinity,late=rem<=0;
+    app.innerHTML='<div class="c"><b>أهلاً '+esc(d.name||"")+'</b> — '+(resume?"إجاباتك بتتحفظ، تقدر تقفل وترجع بنفس اللينك وتكمّل.":"اللينك اتفعّل، ماتقفلش الصفحة.")+' <b id="tm" style="float:left"></b></div><iframe id="q" sandbox="allow-scripts"'+(late?' style="position:absolute;left:-9999px;width:900px;height:700px"':"")+'></iframe><div id="done"></div>';
+    $("#q").srcdoc=wrap(pg.html,resume?(d.log||[]):null,resume);
+    let sent=false,lt,ended=false;
+    const rec=async(n,over)=>{
+      if(sent)return;sent=true;
+      try{await updateDoc(ref,{score:n,finishedAt:Date.now()});$("#done").innerHTML='<div class="c"><h2>تم تسجيل نتيجتك: '+esc(n)+'</h2><p class="mu">أول نتيجة هي اللي بتتحسب، والإعادة للتدريب فقط.</p></div>';if(over)$("#q").style.display="none"}
       catch(err){sent=false;$("#done").innerHTML='<div class="c">حصل خطأ في حفظ النتيجة، جرّب تاني.</div>'}
+    };
+    const expire=()=>{
+      if(ended||sent)return;ended=true;$("#tm").textContent="";
+      $("#q").style.pointerEvents="none";
+      $("#done").innerHTML='<div class="c"><h2>انتهى الوقت ⏰</h2><p class="mu">بنحسب نتيجتك…</p></div>';
+      $("#q").contentWindow.postMessage({type:"force"},"*");
+      setTimeout(()=>{if(!sent)rec(0,true)},2500);
+    };
+    if(lim){
+      if(late)setTimeout(expire,(resume?(d.log||[]).length*250:0)+3000);
+      else{
+        const tick=()=>{const r=lim-(Date.now()-st);if(r<=0){expire();return}if(sent){$("#tm").textContent="";return}
+          $("#tm").textContent="⏳ "+String(Math.floor(r/60000)).padStart(2,"0")+":"+String(Math.floor(r/1000)%60).padStart(2,"0");$("#tm").style.color=r<60000?"#c0392b":"";setTimeout(tick,1000)};
+        tick();
+      }
+    }
+    addEventListener("message",e=>{
+      if(e.source!==$("#q").contentWindow||!e.data)return;
+      if(e.data.type==="log"&&resume&&!ended){
+        clearTimeout(lt);lt=setTimeout(()=>{if(JSON.stringify(e.data.log).length<200000)updateDoc(ref,{log:e.data.log}).catch(()=>{})},1000);return;
+      }
+      if(e.data.type!=="score")return;
+      const n=Number(e.data.score);if(isFinite(n))rec(n,ended);
     });
   }catch(e){msg("حصل خطأ، جرّب تاني")}
 }
@@ -105,17 +131,17 @@ function organizer(u){
   U=u;
   app.innerHTML=`<div class="who">${esc(u.email)} <button id="out" class="s">خروج</button></div>
   <div class="c"><h2>${SUP()?"كل المسابقات":"مسابقاتي"}</h2>
-   <div id="drop">+ مسابقة جديدة: اسحب ملف .html هنا أو <label style="color:var(--b);cursor:pointer">اختار ملف<input id="f" type="file" accept=".html,.htm" hidden></label></div>
+   <p><select id="md" style="padding:8px;border-radius:9px;border:1px solid var(--bd);font:inherit;width:100%"><option value="once">اللينك يفتح مرة واحدة ويسجّل أول نتيجة</option><option value="resume">اللينك يفتح أكتر من مرة، يكمّل من حيث وقف، ويسجّل أول نتيجة</option></select></p><p><input type="number" id="lim" min="0" placeholder="مدة المسابقة بالدقايق (سيبها فاضية لو من غير وقت)" style="width:100%;padding:8px;border-radius:9px;border:1px solid var(--bd);font:inherit"></p><div id="drop">+ مسابقة جديدة: اسحب ملف .html هنا أو <label style="color:var(--b);cursor:pointer">اختار ملف<input id="f" type="file" accept=".html,.htm" hidden></label></div>
    <p id="cs" class="mu"></p>
    <p class="mu">ارفع أي مسابقة HTML عادي، والنتيجة بتتقري تلقائياً من شاشة النهاية. جرّبها بزرار «تجربة المسابقة» قبل ما تبعت.</p>
    <div id="cl"></div></div><div id="dt"></div>`+(SUP()?`<div class="c"><h2>إدارة الخدام</h2><div class="r"><input type="text" id="em" placeholder="إيميل الخادم" style="direction:ltr;text-align:left"><button id="ad">إضافة</button></div><div id="al"></div></div>`:"");
   const setFile=async f=>{
     if(!f)return;
     if(f.size>900000){$("#cs").textContent="الملف كبير (أكتر من 900KB)";return}
-    const def=f.name.replace(/\.html?$/i,""),title=prompt("اسم المسابقة:",def)||def,cid=rnd();
+    const mode=$("#md").value,limit=Math.max(0,parseInt($("#lim").value)||0),def=f.name.replace(/\.html?$/i,""),title=prompt("اسم المسابقة:",def)||def,cid=rnd();
     try{
-      await setDoc(doc(db,"contests",cid),{owner:U.uid,ownerEmail:U.email,title,at:Date.now()});
-      await setDoc(doc(db,"pages",cid),{html:await f.text()});
+      await setDoc(doc(db,"contests",cid),{owner:U.uid,ownerEmail:U.email,title,mode,limit,at:Date.now()});
+      await setDoc(doc(db,"pages",cid),{html:await f.text(),mode,limit});
       $("#cs").textContent="تم حفظ: "+title;await load();pick(cid);
     }catch(e){$("#cs").textContent="فشل الحفظ"}
   };
@@ -145,7 +171,7 @@ async function load(){
 function renderList(){
   $("#cl").innerHTML=contests.map(c=>{
     const cs=codes.filter(x=>x.contest===c.id),dn=cs.filter(x=>x.score!=null).length;
-    return `<div class="k${c.id===sel?" on":""}"><div style="flex:1"><b>${esc(c.title)}</b><div class="mu">${SUP()?esc(c.ownerEmail)+" · ":""}${cs.length} مشارك · ${dn} خلّصوا</div></div><button data-o="${c.id}">فتح</button> <button class="s" data-d="${c.id}">حذف</button></div>`}).join("")||'<p class="mu">مفيش مسابقات لسه</p>';
+    return `<div class="k${c.id===sel?" on":""}"><div style="flex:1"><b>${esc(c.title)}</b><div class="mu">${SUP()?esc(c.ownerEmail)+" · ":""}${c.mode==="resume"?"أكتر من مرة":"مرة واحدة"} · ${c.limit?"⏱ "+c.limit+" دقيقة · ":""}${cs.length} مشارك · ${dn} خلّصوا</div></div><button data-o="${c.id}">فتح</button> <button class="s" data-d="${c.id}">حذف</button></div>`}).join("")||'<p class="mu">مفيش مسابقات لسه</p>';
 }
 function pick(cid){
   sel=cid;renderList();
@@ -166,7 +192,7 @@ function pick(cid){
 async function preview(cid){
   const p=await getDoc(doc(db,"pages",cid));if(!p.exists())return;
   $("#pv").innerHTML='<p id="pvs" class="mu">العب المسابقة للآخر، وهنا هتظهر النتيجة اللي اتقرت (تجربة ومش بتتسجل).</p><iframe id="pf" sandbox="allow-scripts"></iframe>';
-  $("#pf").srcdoc=wrap(p.data().html);
+  $("#pf").srcdoc=wrap(p.data().html,[],false);
   const h=e=>{if(e.source!==$("#pf")?.contentWindow||e.data?.type!=="score")return;$("#pvs").innerHTML="✅ النتيجة اتقرت: <b>"+esc(e.data.score)+"</b>"};
   addEventListener("message",h);
 }
