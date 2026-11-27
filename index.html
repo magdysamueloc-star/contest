@@ -1,146 +1,201 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>المسابقة</title>
+<title>مسابقات كنيسة العذراء وأبي سيفين</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#f6f7f9;--card:#fff;--tx:#1b1f24;--mu:#667;--ac:#1a7f5a;--bd:#dde1e6}
-@media (prefers-color-scheme:dark){:root{--bg:#15181c;--card:#1f2328;--tx:#eceff3;--mu:#99a;--ac:#3fb98a;--bd:#33383f;color-scheme:dark}}
-body{margin:0;background:var(--bg);color:var(--tx);font-family:system-ui,"Segoe UI",Tahoma,sans-serif;line-height:1.6}
-main{max-width:860px;margin:auto;padding:16px}
-.c{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:16px;margin-bottom:14px}
-h1{font-size:22px}h2{font-size:17px;margin:0 0 10px}
-button,.b{background:var(--ac);color:#fff;border:0;border-radius:8px;padding:8px 14px;font:inherit;cursor:pointer;text-decoration:none;display:inline-block}
-button.s{background:transparent;color:var(--ac);border:1px solid var(--ac)}
-textarea,input[type=text]{width:100%;box-sizing:border-box;background:var(--bg);color:var(--tx);border:1px solid var(--bd);border-radius:8px;padding:8px;font:inherit}
-#drop{border:2px dashed var(--ac);border-radius:12px;padding:28px;text-align:center;color:var(--mu)}
-#drop.o{background:var(--bg)}
-.t{overflow-x:auto}table{border-collapse:collapse;width:100%}th,td{padding:6px 8px;border-bottom:1px solid var(--bd);text-align:right;white-space:nowrap}
-.mu{color:var(--mu);font-size:14px}pre{direction:ltr;text-align:left;background:var(--bg);padding:8px;border-radius:8px;overflow-x:auto;font-size:12px}
-.r{display:flex;gap:8px;margin-bottom:6px}.r input:first-child{flex:1}.r input:last-child{flex:1;direction:ltr;text-align:left}
-details{margin:8px 0}
-iframe{width:100%;height:80vh;border:1px solid var(--bd);border-radius:12px;background:#fff}
-</style></head><body><main id="app"><p class="mu">جاري التحميل…</p></main>
+:root{--g:#e3b94f;--n:#0b1f4d;--b:#1f4fb4;--tx:#14213d;--mu:#667;--bd:#dfe4ee}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;color:var(--tx);font-family:Cairo,system-ui,"Segoe UI",Tahoma,sans-serif;line-height:1.7;
+background:linear-gradient(120deg,#0b1f4d,#163a85,#0d2a63,#1b4aa0);background-size:300% 300%;animation:sh 22s ease infinite}
+@keyframes sh{0%,100%{background-position:0 50%}50%{background-position:100% 50%}}
+.bg{position:fixed;inset:0;overflow:hidden;pointer-events:none;z-index:0}
+.bg i{position:absolute;bottom:-20px;width:6px;height:6px;border-radius:50%;background:var(--g);opacity:0;box-shadow:0 0 10px var(--g);animation:up linear infinite}
+@keyframes up{0%{transform:translateY(0);opacity:0}10%{opacity:.8}100%{transform:translateY(-110vh) translateX(30px);opacity:0}}
+.bg svg{position:absolute;left:50%;top:50%;width:min(80vw,520px);margin:-260px 0 0 -260px;opacity:.07;animation:fl 14s ease-in-out infinite}
+@keyframes fl{50%{transform:translateY(-18px) scale(1.04)}}
+@media (prefers-reduced-motion:reduce){body,.bg i,.bg svg{animation:none}}
+main{position:relative;z-index:1;max-width:880px;margin:auto;padding:16px}
+.hd{text-align:center;color:#fff;padding:18px 0 8px}
+.hd .t{font-size:24px;font-weight:700;background:linear-gradient(90deg,#f6dc8b,#e3b94f,#f6dc8b);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hd .s{opacity:.85;font-size:15px}
+.hd .l{width:54px;height:2px;margin:8px auto 0;background:var(--g);border-radius:2px}
+.c{background:rgba(255,255,255,.96);border:1px solid var(--bd);border-top:3px solid var(--g);border-radius:14px;padding:16px;margin-bottom:14px;box-shadow:0 8px 28px rgba(0,0,0,.25)}
+h2{font-size:17px;margin:0 0 10px;color:var(--n)}
+button,.b{background:linear-gradient(180deg,#2a5fd0,var(--b));color:#fff;border:0;border-radius:9px;padding:8px 14px;font:inherit;cursor:pointer}
+button.s{background:#fff;color:var(--b);border:1px solid var(--b)}
+button.g{background:linear-gradient(180deg,#f0cb6a,var(--g));color:#3b2a00;font-weight:700}
+button:hover{filter:brightness(1.08)}
+input[type=text],textarea{width:100%;background:#f6f8fc;color:var(--tx);border:1px solid var(--bd);border-radius:9px;padding:8px;font:inherit}
+#drop{border:2px dashed var(--b);border-radius:12px;padding:26px;text-align:center;color:var(--mu)}#drop.o{background:#eef3ff}
+.r{display:flex;gap:8px;margin-bottom:6px;align-items:center}.r input:first-child{flex:1}.r input:nth-child(2){flex:1;direction:ltr;text-align:left}
+.t2{overflow-x:auto}table{border-collapse:collapse;width:100%}th,td{padding:6px 8px;border-bottom:1px solid var(--bd);text-align:right;white-space:nowrap}
+.mu{color:var(--mu);font-size:14px}pre{direction:ltr;text-align:left;background:#f6f8fc;padding:8px;border-radius:8px;overflow-x:auto;font-size:12px}
+.who{color:#fff;text-align:center;font-size:14px;margin-bottom:10px}.who button{padding:3px 10px;margin-right:6px}
+details{margin:8px 0}.k{display:flex;gap:8px;align-items:center;padding:10px;border:1px solid var(--bd);border-radius:10px;margin-top:8px}.k.on{border-color:var(--g);background:#fffaf0}iframe{width:100%;height:80vh;border:0;border-radius:12px;background:#fff}
+</style></head><body>
+<div class="bg" id="bg"><svg viewBox="0 0 100 100"><g fill="none" stroke="#e3b94f" stroke-width="2"><path d="M42 5h16v37h37v16H58v37H42V58H5V42h37z"/><circle cx="50" cy="50" r="9"/></g></svg></div>
+<main><div class="hd"><div class="t">كنيسة العذراء وأبي سيفين</div><div class="s">مطرانية شبرا الخيمة</div><div class="l"></div></div><div id="app"><p class="mu" style="color:#fff;text-align:center">جاري التحميل…</p></div></main>
 <script type="module">
 import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
-import {getFirestore,doc,getDoc,setDoc,updateDoc,collection,getDocs} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import {getFirestore,doc,getDoc,setDoc,updateDoc,deleteDoc,collection,getDocs,query,where,writeBatch} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 import {getAuth,GoogleAuthProvider,signInWithPopup,onAuthStateChanged,signOut} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
-
-const ADMIN_EMAIL="magdysamuel.oc@gmail.com";
-const fb=initializeApp({
-  apiKey:"AIzaSyB94W9NmSwavjwk2hqthV4FPZGjGumWAks",
-  authDomain:"quiz-contest-52d78.firebaseapp.com",
-  projectId:"quiz-contest-52d78",
-  storageBucket:"quiz-contest-52d78.firebasestorage.app",
-  messagingSenderId:"645046467400",
-  appId:"1:645046467400:web:4452d8477dd0f2ad9ad17d"});
+const SUPER="magdysamuel.oc@gmail.com";
+const fb=initializeApp({apiKey:"AIzaSyB94W9NmSwavjwk2hqthV4FPZGjGumWAks",authDomain:"quiz-contest-52d78.firebaseapp.com",projectId:"quiz-contest-52d78",storageBucket:"quiz-contest-52d78.firebasestorage.app",messagingSenderId:"645046467400",appId:"1:645046467400:web:4452d8477dd0f2ad9ad17d"});
 const db=getFirestore(fb),auth=getAuth(fb);
 const $=s=>document.querySelector(s),app=$("#app");
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const BASE=location.origin+location.pathname;
-const hash=location.hash.slice(1);
+const BASE=location.origin+location.pathname,hash=location.hash.slice(1);
+for(let i=0;i<16;i++){const e=document.createElement("i");e.style.cssText=`left:${Math.random()*100}%;animation-duration:${9+Math.random()*10}s;animation-delay:${Math.random()*12}s`;$("#bg").appendChild(e)}
+const msg=(t,s="")=>app.innerHTML=`<div class="c"><h2>${t}</h2><p class="mu">${s}</p></div>`;
+let U,contests=[],codes=[],sel=null;
 
 if(hash.startsWith("p-"))participant(hash.slice(2));
-else onAuthStateChanged(auth,u=>{
-  if(u&&u.email===ADMIN_EMAIL)organizer();
-  else app.innerHTML='<div class="c"><h2>لوحة المنظّم</h2><p><button id="in">دخول بجوجل</button></p>'+(u?'<p class="mu">الحساب ده ('+esc(u.email)+') مش منظّم.</p>':'')+'</div>',
-       $("#in").onclick=()=>signInWithPopup(auth,new GoogleAuthProvider());
+else onAuthStateChanged(auth,async u=>{
+  if(!u){app.innerHTML='<div class="c"><h2>دخول الخدام</h2><p><button id="in">دخول بجوجل</button></p></div>';$("#in").onclick=()=>signInWithPopup(auth,new GoogleAuthProvider());return}
+  let ok=u.email===SUPER;
+  if(!ok){try{ok=(await getDoc(doc(db,"allowed",u.email))).exists()}catch(e){}}
+  if(ok)organizer(u);
+  else{msg("حسابك لسه مش مفعّل","ابعت الإيميل ده للمسؤول عشان يفعّله: "+esc(u.email));}
 });
 
 /* ---------- المشارك ---------- */
 async function participant(code){
   try{
     const ref=doc(db,"codes",code),s=await getDoc(ref);
-    if(!s.exists()){app.innerHTML='<div class="c"><h2>كود غير صحيح</h2></div>';return}
-    if(s.data().score!=null){app.innerHTML='<div class="c"><h2>انت خلّصت المسابقة قبل كده</h2></div>';return}
-    try{await setDoc(doc(db,"claims",code),{startedAt:Date.now()})}
-    catch(e){app.innerHTML='<div class="c"><h2>اللينك ده اتفتح قبل كده</h2><p class="mu">المسابقة بتتفتح مرة واحدة فقط.</p></div>';return}
-    const c=await getDoc(doc(db,"contest","main"));
-    if(!c.exists()){app.innerHTML='<div class="c">المسابقة لسه ما اتجهزتش.</div>';return}
-    app.innerHTML='<div class="c"><b>أهلاً '+esc(s.data().name||"")+'</b> — اللينك اتفعّل، ماتقفلش الصفحة.</div><iframe id="q" sandbox="allow-scripts"></iframe><div id="done"></div>';
+    if(!s.exists()){msg("كود غير صحيح");return}
+    const d=s.data();
+    if(d.score!=null){msg("انت خلّصت المسابقة قبل كده");return}
+    try{await updateDoc(ref,{startedAt:Date.now()})}catch(e){msg("اللينك ده اتفتح قبل كده","المسابقة بتتفتح مرة واحدة فقط.");return}
+    const c=await getDoc(doc(db,"pages",d.contest));
+    if(!c.exists()){msg("المسابقة لسه ما اتجهزتش");return}
+    app.innerHTML='<div class="c"><b>أهلاً '+esc(d.name||"")+'</b> — اللينك اتفعّل، ماتقفلش الصفحة.</div><iframe id="q" sandbox="allow-scripts"></iframe><div id="done"></div>';
     $("#q").srcdoc=c.data().html;
     let sent=false;
     addEventListener("message",async e=>{
       if(sent||e.source!==$("#q").contentWindow||!e.data||e.data.type!=="score")return;
       const n=Number(e.data.score);if(!isFinite(n))return;
       sent=true;
-      try{await updateDoc(ref,{score:n,finishedAt:Date.now()});$("#done").innerHTML='<div class="c"><h2>تم تسجيل نتيجتك: '+esc(n)+'</h2></div>'}
+      try{await updateDoc(ref,{score:n,finishedAt:Date.now()});$("#done").innerHTML='<div class="c"><h2>تم تسجيل نتيجتك: '+esc(n)+'</h2><p class="mu">أول محاولة هي اللي بتتحسب، والإعادة للتدريب فقط.</p></div>'}
       catch(err){sent=false;$("#done").innerHTML='<div class="c">حصل خطأ في حفظ النتيجة، جرّب تاني.</div>'}
     });
-  }catch(e){app.innerHTML='<div class="c">حصل خطأ، جرّب تاني.</div>'}
+  }catch(e){msg("حصل خطأ، جرّب تاني")}
 }
 
 /* ---------- المنظّم ---------- */
-let rows=[];
-function organizer(){
-  app.innerHTML=`<h1>🏆 منظّم المسابقات</h1>
-  <div class="c"><h2>١) ارفع المسابقة (HTML)</h2>
-   <div id="drop">اسحب ملف المسابقة .html هنا أو <label style="color:var(--ac);cursor:pointer">اختار ملف<input id="f" type="file" accept=".html,.htm" hidden></label></div>
+const SUP=()=>U.email===SUPER;
+function organizer(u){
+  U=u;
+  app.innerHTML=`<div class="who">${esc(u.email)} <button id="out" class="s">خروج</button></div>
+  <div class="c"><h2>${SUP()?"كل المسابقات":"مسابقاتي"}</h2>
+   <div id="drop">+ مسابقة جديدة: اسحب ملف .html هنا أو <label style="color:var(--b);cursor:pointer">اختار ملف<input id="f" type="file" accept=".html,.htm" hidden></label></div>
    <p id="cs" class="mu"></p>
    <p class="mu">لازم المسابقة في آخرها تبعت النتيجة بالسطر ده:</p>
-   <pre>parent.postMessage({type:"score", score: 8}, "*");</pre></div>
-  <div class="c"><h2>٢) الأسماء والأرقام</h2>
-   <div id="rowsin"></div>
-   <p><button id="addr" class="s">+ إضافة صف</button></p>
-   <p class="mu">الرقم بكود الدولة (20 لمصر) من غير + أو صفر في الأول. مثال: 201001234567</p>
-   <details><summary class="mu">تعديل نص الرسالة</summary><textarea id="msg" rows="2">أهلاً {name}، دي مسابقتك. اللينك بيتفتح مرة واحدة بس: {link}</textarea></details>
-   <p><button id="gen">حفظ الأسماء وتجهيز اللينكات</button></p></div>
-  <div class="c"><h2>٣) المشاركين والترتيب</h2>
-   <p><button id="all">إرسال للكل</button> <button id="csv" class="s">تصدير CSV</button> <button id="rf" class="s">تحديث</button> <button id="out" class="s">خروج</button></p>
-   <div class="t"><table id="tb"></table></div></div>`;
-  const setFile=async f=>{if(!f)return;const html=await f.text();
-    try{await setDoc(doc(db,"contest","main"),{html,title:f.name,at:Date.now()});$("#cs").textContent="تم حفظ: "+f.name}
-    catch(e){$("#cs").textContent="فشل الحفظ"}};
+   <pre>parent.postMessage({type:"score", score: 8}, "*");</pre>
+   <div id="cl"></div></div><div id="dt"></div>`+(SUP()?`<div class="c"><h2>إدارة الخدام</h2><div class="r"><input type="text" id="em" placeholder="إيميل الخادم" style="direction:ltr;text-align:left"><button id="ad">إضافة</button></div><div id="al"></div></div>`:"");
+  const setFile=async f=>{
+    if(!f)return;
+    if(f.size>900000){$("#cs").textContent="الملف كبير (أكتر من 900KB)";return}
+    const def=f.name.replace(/\.html?$/i,""),title=prompt("اسم المسابقة:",def)||def,cid=rnd();
+    try{
+      await setDoc(doc(db,"contests",cid),{owner:U.uid,ownerEmail:U.email,title,at:Date.now()});
+      await setDoc(doc(db,"pages",cid),{html:await f.text()});
+      $("#cs").textContent="تم حفظ: "+title;await load();pick(cid);
+    }catch(e){$("#cs").textContent="فشل الحفظ"}
+  };
   $("#f").onchange=e=>setFile(e.target.files[0]);
   const dr=$("#drop");
-  dr.ondragover=e=>{e.preventDefault();dr.classList.add("o")};
-  dr.ondragleave=()=>dr.classList.remove("o");
+  dr.ondragover=e=>{e.preventDefault();dr.classList.add("o")};dr.ondragleave=()=>dr.classList.remove("o");
   dr.ondrop=e=>{e.preventDefault();dr.classList.remove("o");setFile(e.dataTransfer.files[0])};
-  getDoc(doc(db,"contest","main")).then(s=>{if(s.exists())$("#cs").textContent="المسابقة الحالية: "+(s.data().title||"")});
-  initRows();$("#addr").onclick=()=>addRow();$("#gen").onclick=gen;$("#all").onclick=sendNext;$("#rf").onclick=load;$("#csv").onclick=csv;$("#out").onclick=()=>signOut(auth);load();
+  $("#cl").onclick=e=>{const o=e.target.dataset?.o,d=e.target.dataset?.d;if(o)pick(o);if(d)delContest(d)};
+  $("#out").onclick=()=>signOut(auth);
+  if(SUP()){
+    $("#ad").onclick=async()=>{const m=$("#em").value.trim().toLowerCase();if(!m.includes("@"))return;await setDoc(doc(db,"allowed",m),{at:Date.now()});$("#em").value="";al()};
+    $("#al").onclick=async e=>{const m=e.target.dataset?.del;if(m&&confirm("حذف "+m+"؟")){await deleteDoc(doc(db,"allowed",m));al()}};al();
+  }
+  load();
 }
+async function al(){const q=await getDocs(collection(db,"allowed"));$("#al").innerHTML=q.docs.map(d=>`<div class="r"><span style="flex:1;direction:ltr;text-align:left">${esc(d.id)}</span><button class="s" data-del="${esc(d.id)}">حذف</button></div>`).join("")||'<p class="mu">لسه مفيش خدام</p>'}
 const rnd=()=>Array.from(crypto.getRandomValues(new Uint8Array(8)),b=>"abcdefghjkmnpqrstuvwxyz23456789"[b%31]).join("");
+async function load(){
+  const col=n=>SUP()?collection(db,n):query(collection(db,n),where("owner","==",U.uid));
+  const [a,b]=await Promise.all([getDocs(col("contests")),getDocs(col("codes"))]);
+  contests=a.docs.map(d=>({id:d.id,...d.data()})).sort((x,y)=>y.at-x.at);
+  codes=b.docs.map(d=>({id:d.id,...d.data()}));
+  if(sel&&!contests.find(c=>c.id===sel))sel=null;
+  renderList();
+  if(sel)renderTable();else $("#dt").innerHTML="";
+}
+function renderList(){
+  $("#cl").innerHTML=contests.map(c=>{
+    const cs=codes.filter(x=>x.contest===c.id),dn=cs.filter(x=>x.score!=null).length;
+    return `<div class="k${c.id===sel?" on":""}"><div style="flex:1"><b>${esc(c.title)}</b><div class="mu">${SUP()?esc(c.ownerEmail)+" · ":""}${cs.length} مشارك · ${dn} خلّصوا</div></div><button data-o="${c.id}">فتح</button> <button class="s" data-d="${c.id}">حذف</button></div>`}).join("")||'<p class="mu">مفيش مسابقات لسه</p>';
+}
+function pick(cid){
+  sel=cid;renderList();
+  const c=contests.find(x=>x.id===cid);if(!c)return;
+  const mine=c.owner===U.uid;
+  $("#dt").innerHTML=(mine?`<div class="c"><h2>أسماء وأرقام: ${esc(c.title)}</h2><div id="rowsin"></div>
+   <p><button id="addr" class="s">+ إضافة صف</button></p>
+   <p class="mu">الرقم بكود الدولة من غير + أو صفر في الأول. مثال: 201001234567</p>
+   <p><button id="gen" class="g">حفظ الأسماء وتجهيز اللينكات</button></p></div>`:"")+`<div class="c"><h2>المشاركين والترتيب: ${esc(c.title)}</h2>
+   <details><summary class="mu">تعديل نص الرسالة</summary><textarea id="msg" rows="2">أهلاً {name}، دي مسابقتك. اللينك بيتفتح مرة واحدة بس: {link}</textarea></details>
+   <p><button id="all" class="g">إرسال للكل</button> <button id="csv" class="s">تصدير CSV</button> <button id="rf" class="s">تحديث</button></p>
+   <div class="t2"><table id="tb"></table></div></div>`;
+  if(mine){initRows();$("#addr").onclick=()=>addRow();$("#gen").onclick=gen}
+  $("#all").onclick=sendNext;$("#csv").onclick=()=>csv(cid);$("#rf").onclick=load;
+  $("#tb").onclick=e=>{const id=e.target.dataset?.id;if(id)sendTo(id)};
+  renderTable();
+}
 function addRow(){const d=document.createElement("div");d.className="r";d.innerHTML='<input type="text" placeholder="الاسم"><input type="text" placeholder="الرقم 201001234567" inputmode="numeric">';$("#rowsin").appendChild(d)}
 function initRows(){$("#rowsin").innerHTML="";for(let i=0;i<5;i++)addRow()}
 async function gen(){
   for(const r of document.querySelectorAll("#rowsin .r")){
     const [n,p]=r.querySelectorAll("input"),phone=p.value.replace(/\D/g,""),name=n.value.trim();
     if(phone.length<8)continue;
-    await setDoc(doc(db,"codes",rnd()),{phone,name,createdAt:Date.now(),score:null});
+    await setDoc(doc(db,"codes",rnd()),{phone,name,owner:U.uid,contest:sel,createdAt:Date.now()});
   }
   initRows();load();
 }
+const rowsOf=cid=>codes.filter(x=>x.contest===cid).sort((a,b)=>(b.score??-1)-(a.score??-1)||((a.finishedAt-a.startedAt)||1e15)-((b.finishedAt-b.startedAt)||1e15));
+function renderTable(){
+  if(!$("#tb"))return pick(sel);
+  const rs=rowsOf(sel),med=["🥇","🥈","🥉"];let rank=0;
+  const left=rs.filter(x=>!x.sentAt&&!x.startedAt).length;
+  $("#all").textContent=left?"إرسال التالي ("+left+" متبقي)":"إرسال للكل";
+  $("#tb").innerHTML="<tr><th>#</th><th>الاسم</th><th>الرقم</th><th>الحالة</th><th>الدرجة</th><th>الزمن</th><th>واتساب</th></tr>"+rs.map(c=>{
+    const done=c.score!=null,st=done?"خلّص":c.startedAt?"فتح":c.sentAt?"اتبعت":"لسه";
+    const t=done&&c.startedAt?Math.round((c.finishedAt-c.startedAt)/1000)+" ث":"-";
+    const k=done?++rank:0;
+    const btn=c.startedAt?"":'<button class="'+(c.sentAt?"s":"")+'" data-id="'+c.id+'">'+(c.sentAt?"إعادة":"إرسال")+"</button>";
+    return "<tr><td>"+(done?(med[k-1]||k):"-")+"</td><td>"+esc(c.name)+"</td><td dir=ltr>"+esc(c.phone)+"</td><td>"+st+"</td><td>"+(done?esc(c.score):"-")+"</td><td>"+t+"</td><td>"+btn+"</td></tr>";
+  }).join("");
+}
 const waLink=c=>"https://wa.me/"+c.phone+"?text="+encodeURIComponent($("#msg").value.replace("{name}",c.name||"").replace("{link}",BASE+"#p-"+c.id));
 async function sendTo(id){
-  const c=rows.find(x=>x.id===id);if(!c)return;
+  const c=codes.find(x=>x.id===id);if(!c)return;
   window.open(waLink(c),"_blank");
   try{await updateDoc(doc(db,"codes",id),{sentAt:Date.now()})}catch(e){}
   load();
 }
-function sendNext(){
-  const c=rows.find(x=>!x.sentAt&&!x.startedAt);
-  if(!c){alert("كله اتبعت");return}
-  sendTo(c.id);
+function sendNext(){const c=rowsOf(sel).find(x=>!x.sentAt&&!x.startedAt);if(!c){alert("كله اتبعت");return}sendTo(c.id)}
+async function delContest(cid){
+  const c=contests.find(x=>x.id===cid);if(!c)return;
+  if(!confirm('حذف مسابقة "'+c.title+'" وكل مشاركيها ونتايجهم؟'))return;
+  if(confirm("تنزّل نسخة CSV بالنتايج قبل الحذف؟ (OK = نعم)"))csv(cid);
+  let b=writeBatch(db),n=0;
+  for(const d of codes.filter(x=>x.contest===cid)){b.delete(doc(db,"codes",d.id));if(++n%400===0){await b.commit();b=writeBatch(db)}}
+  await b.commit();
+  try{await deleteDoc(doc(db,"pages",cid))}catch(e){}
+  await deleteDoc(doc(db,"contests",cid));
+  if(sel===cid)sel=null;
+  load();
 }
-async function load(){
-  const [cs,cl]=await Promise.all([getDocs(collection(db,"codes")),getDocs(collection(db,"claims"))]);
-  const started={};cl.forEach(d=>started[d.id]=d.data().startedAt);
-  rows=cs.docs.map(d=>({id:d.id,...d.data(),startedAt:started[d.id]}));
-  rows.sort((a,b)=>(b.score??-1)-(a.score??-1)||((a.finishedAt-a.startedAt)||1e15)-((b.finishedAt-b.startedAt)||1e15));
-  let rank=0;
-  const left=rows.filter(x=>!x.sentAt&&!x.startedAt).length;
-  $("#all").textContent=left?"إرسال التالي ("+left+" متبقي)":"إرسال للكل";
-  $("#tb").innerHTML="<tr><th>#</th><th>الاسم</th><th>الرقم</th><th>الحالة</th><th>الدرجة</th><th>الزمن</th><th>واتساب</th></tr>"+rows.map(c=>{
-    const done=c.score!=null,st=done?"خلّص":c.startedAt?"فتح":c.sentAt?"اتبعت":"لسه";
-    const t=done&&c.startedAt?Math.round((c.finishedAt-c.startedAt)/1000)+" ث":"-";
-    const btn=c.startedAt?"":'<button class="'+(c.sentAt?"s":"")+'" data-id="'+c.id+'">'+(c.sentAt?"إعادة":"إرسال")+"</button>";
-    return "<tr><td>"+(done?++rank:"-")+"</td><td>"+esc(c.name)+"</td><td dir=ltr>"+esc(c.phone)+"</td><td>"+st+"</td><td>"+(done?esc(c.score):"-")+"</td><td>"+t+"</td><td>"+btn+"</td></tr>";
-  }).join("");
-  $("#tb").onclick=e=>{const id=e.target.dataset?.id;if(id)sendTo(id)};
-}
-function csv(){
-  const r=[["rank","name","phone","code","score","seconds"]];let k=0;
-  rows.forEach(c=>{const d=c.score!=null;r.push([d?++k:"",c.name||"",c.phone,c.id,d?c.score:"",d&&c.startedAt?Math.round((c.finishedAt-c.startedAt)/1000):""])});
+function csv(cid){
+  const rs=rowsOf(cid);if(!rs.length){alert("مفيش مشاركين");return}
+  const r=[["rank","name","phone","score","seconds"]];let k=0;
+  rs.forEach(c=>{const d=c.score!=null;r.push([d?++k:"",c.name||"",c.phone,d?c.score:"",d&&c.startedAt?Math.round((c.finishedAt-c.startedAt)/1000):""])});
   const data="\ufeff"+r.map(x=>x.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(",")).join("\n");
-  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([data],{type:"text/csv"}));a.download="results.csv";a.click();
+  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([data],{type:"text/csv"}));a.download=(contests.find(x=>x.id===cid)?.title||"results")+".csv";a.click();
 }
 </script></body></html>
