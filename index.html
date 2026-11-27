@@ -197,18 +197,20 @@ function pick(cid){
   const c=contests.find(x=>x.id===cid);if(!c)return;
   const mine=c.owner===U.uid;
   $("#dt").innerHTML=(mine?`<div class="c"><h2>أسماء وأرقام: ${esc(c.title)}</h2><div id="rowsin"></div>
-   <p><button id="addr" class="s">+ إضافة صف</button></p>
+   <p><button id="addr" class="s">+ إضافة صف</button> <button id="imp" class="s">📥 استيراد من Excel</button><input type="file" id="impf" accept=".xlsx,.xls,.csv" hidden></p><p id="impm" class="mu"></p>
    <p class="mu">الرقم بكود الدولة من غير + أو صفر في الأول. مثال: 201001234567</p>
    <p><button id="gen" class="g">حفظ الأسماء وتجهيز اللينكات</button></p></div>`:"")+`<div class="c"><h2>المشاركين والترتيب: ${esc(c.title)}</h2>
    ${mine?`<div class="r" style="flex-wrap:wrap"><select id="nmd" style="padding:8px;border-radius:9px;border:1px solid var(--bd);font:inherit"><option value="once"${c.mode!=="resume"?" selected":""}>تفتح مرة واحدة فقط</option><option value="resume"${c.mode==="resume"?" selected":""}>تفتح أكتر من مرة + وقت قفل</option></select><input type="datetime-local" id="ned" value="${c.closeAt?toLI(c.closeAt):""}"><button id="sed" class="s">حفظ الإعدادات</button></div>`:""}
    <details><summary class="mu">تعديل نص الرسالة</summary><textarea id="msg" rows="2">${c.mode==="resume"?(c.closeAt?"أهلاً {name}، دي مسابقتك. تقدر تفتح اللينك أكتر من مرة وتكمّل، والمسابقة بتقفل {close}: {link}":"أهلاً {name}، دي مسابقتك. تقدر تفتح اللينك أكتر من مرة وتكمّل: {link}"):"أهلاً {name}، دي مسابقتك. اللينك بيتفتح مرة واحدة بس: {link}"}</textarea></details>
-   <p><button id="all" class="g">إرسال للكل</button> <button id="csv" class="s">تصدير CSV</button> <button id="rf" class="s">تحديث</button> <button id="pvb" class="s">تجربة المسابقة</button></p><div id="pv"></div>
+   <p><button id="all" class="g">إرسال للكل</button> <button id="csv" class="s">تصدير CSV</button> <button id="rf" class="s">تحديث</button> <button id="pvb" class="s">تجربة المسابقة</button> <button id="dsb" class="g">📊 لوحة النتائج</button></p><div id="pv"></div><div id="dash"></div>
    <div class="t2"><table id="tb"></table></div></div>`;
-  if(mine){initRows();$("#addr").onclick=()=>addRow();$("#gen").onclick=gen}
+  if(mine){initRows();$("#addr").onclick=()=>addRow();$("#gen").onclick=gen;
+    $("#imp").onclick=()=>$("#impf").click();
+    $("#impf").onchange=async e=>{const f=e.target.files[0];e.target.value="";if(f)try{await importXL(f)}catch(err){$("#impm").textContent="فشل قراءة الملف: تأكد إنه Excel أو CSV سليم، وإن النت شغال."}}}
   if($("#sed")){const sync=()=>{$("#ned").style.display=$("#nmd").value==="resume"?"":"none"};$("#nmd").onchange=sync;sync();
   $("#sed").onclick=async()=>{const m=$("#nmd").value;let closeAt=0;if(m==="resume"){closeAt=new Date($("#ned").value).getTime();if(!isFinite(closeAt)){alert("حدّد التاريخ والوقت");return}}
     try{await updateDoc(doc(db,"contests",cid),{mode:m,closeAt});await updateDoc(doc(db,"pages",cid),{mode:m,closeAt});await load();pick(cid)}catch(e){alert("فشل التحديث")}}}
-  $("#all").onclick=sendNext;$("#csv").onclick=()=>csv(cid);$("#rf").onclick=load;$("#pvb").onclick=()=>preview(cid);
+  $("#dsb").onclick=()=>dash(cid);$("#all").onclick=sendNext;$("#csv").onclick=()=>csv(cid);$("#rf").onclick=load;$("#pvb").onclick=()=>preview(cid);
   $("#tb").onclick=e=>{const id=e.target.dataset?.id;if(id)sendTo(id)};
   renderTable();
 }
@@ -219,15 +221,18 @@ async function preview(cid){
   const h=e=>{if(e.source!==$("#pf")?.contentWindow||e.data?.type!=="score")return;$("#pvs").innerHTML="✅ النتيجة اتقرت: <b>"+esc(e.data.score)+"</b>"};
   addEventListener("message",h);
 }
-function addRow(){const d=document.createElement("div");d.className="r";d.innerHTML='<input type="text" placeholder="الاسم"><input type="text" placeholder="الرقم 201001234567" inputmode="numeric">';$("#rowsin").appendChild(d)}
+function addRow(n="",ph=""){const d=document.createElement("div");d.className="r";d.innerHTML='<input type="text" placeholder="الاسم"><input type="text" placeholder="الرقم 201001234567" inputmode="numeric">';const i=d.querySelectorAll("input");i[0].value=n;i[1].value=ph;$("#rowsin").appendChild(d)}
 function initRows(){$("#rowsin").innerHTML="";for(let i=0;i<5;i++)addRow()}
 async function gen(){
+  let b=writeBatch(db),n=0;
   for(const r of document.querySelectorAll("#rowsin .r")){
-    const [n,p]=r.querySelectorAll("input"),phone=p.value.replace(/\D/g,""),name=n.value.trim();
+    const [nm,p]=r.querySelectorAll("input"),phone=normPhone(p.value),name=nm.value.trim();
     if(phone.length<8)continue;
-    await setDoc(doc(db,"codes",rnd()),{phone,name,owner:U.uid,contest:sel,createdAt:Date.now()});
+    b.set(doc(db,"codes",rnd()),{phone,name,owner:U.uid,contest:sel,createdAt:Date.now()});
+    if(++n%400===0){await b.commit();b=writeBatch(db)}
   }
-  initRows();load();
+  if(n%400)await b.commit();
+  initRows();$("#impm").textContent=n?"اتحفظ "+n+" مشارك ✅":"";load();
 }
 const rowsOf=cid=>codes.filter(x=>x.contest===cid).sort((a,b)=>(b.score??-1)-(a.score??-1)||((a.finishedAt-a.startedAt)||1e15)-((b.finishedAt-b.startedAt)||1e15));
 function renderTable(){
@@ -242,6 +247,7 @@ function renderTable(){
     const btn=(c.startedAt&&ct?.mode!=="resume")||done?"":'<button class="'+(c.sentAt?"s":"")+'" data-id="'+c.id+'">'+(c.sentAt?"إعادة":"إرسال")+"</button>";
     return "<tr><td>"+(done?(med[k-1]||k):"-")+"</td><td>"+esc(c.name)+"</td><td dir=ltr>"+esc(c.phone)+"</td><td>"+st+"</td><td>"+(done?esc(c.score):"-")+"</td><td>"+t+"</td><td>"+btn+"</td></tr>";
   }).join("");
+  if($("#dcv"))paint(sel);
 }
 const waLink=c=>{const ct=contests.find(x=>x.id===sel);return "https://wa.me/"+c.phone+"?text="+encodeURIComponent($("#msg").value.replace("{name}",()=>c.name||"").replace("{close}",()=>ct?.closeAt?fmtD(ct.closeAt):"").replace("{link}",()=>BASE+"#p-"+c.id))};
 async function sendTo(id){
@@ -269,5 +275,109 @@ function csv(cid){
   rs.forEach(c=>{const d=c.score!=null;r.push([d?++k:"",c.name||"",c.phone,d?c.score:"",d&&c.startedAt?Math.round((c.finishedAt-c.startedAt)/1000):""])});
   const data="\ufeff"+r.map(x=>x.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(",")).join("\n");
   const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([data],{type:"text/csv"}));a.download=(contests.find(x=>x.id===cid)?.title||"results")+".csv";a.click();
+}
+
+const normPhone=v=>{let p=String(v??"").trim();if(/e\+/i.test(p)&&isFinite(Number(p)))p=Number(p).toFixed(0);p=p.replace(/[٠-٩]/g,d=>"٠١٢٣٤٥٦٧٨٩".indexOf(d)).replace(/\D/g,"");if(p.startsWith("00"))p=p.slice(2);if(/^01\d{9}$/.test(p))p="20"+p.slice(1);else if(/^1[0125]\d{8}$/.test(p))p="20"+p;return p};
+let XL;
+const loadXL=()=>XL||(XL=new Promise((ok,no)=>{if(window.XLSX)return ok(window.XLSX);const e=document.createElement("script");e.src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";e.onload=()=>ok(window.XLSX);e.onerror=()=>{XL=null;no(new Error("load"))};document.head.appendChild(e)}));
+async function importXL(f){
+  $("#impm").textContent="جاري قراءة الملف…";
+  const X=await loadXL();
+  const wb=/\.csv$/i.test(f.name)?X.read(await f.text(),{type:"string"}):X.read(await f.arrayBuffer(),{type:"array"});
+  const rows=X.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,raw:true,defval:""});
+  const w=Math.max(0,...rows.map(r=>r.length));
+  let pc=-1,best=0;
+  for(let j=0;j<w;j++){let n=0;for(const r of rows){const p=normPhone(r[j]);if(p.length>=10&&p.length<=15)n++}if(n>best){best=n;pc=j}}
+  if(pc<0){$("#impm").textContent="مش لاقي عمود أرقام تليفون في الملف.";return}
+  let nc=-1;best=0;
+  for(let j=0;j<w;j++){if(j===pc)continue;let n=0;for(const r of rows){const t=String(r[j]??"").trim();if(t&&!/^[\d\s+().-]+$/.test(t))n++}if(n>best){best=n;nc=j}}
+  const seen=new Set(codes.filter(x=>x.contest===sel).map(x=>x.phone+"|"+(x.name||"")));
+  const out=[];let dup=0,bad=0,started=false;
+  for(const r of rows){
+    const ph=normPhone(r[pc]),nm=nc>=0?String(r[nc]??"").trim():"";
+    if(ph.length>=10&&ph.length<=15){started=true;const k=ph+"|"+nm;if(seen.has(k)){dup++;continue}seen.add(k);out.push([nm,ph])}
+    else if(started&&r.some(v=>String(v).trim()))bad++;
+  }
+  if(!out.length){$("#impm").textContent="مفيش مشاركين جداد في الملف"+(dup?" (كلهم موجودين قبل كده).":".");return}
+  $("#rowsin").innerHTML="";out.forEach(([n,p])=>addRow(n,p));
+  $("#impm").textContent="اتقرا "+out.length+" مشارك"+(dup?" · "+dup+" مكرر اتجاهل":"")+(bad?" · "+bad+" صف رقمه غلط اتجاهل":"")+" — راجعهم تحت واضغط «حفظ الأسماء وتجهيز اللينكات».";
+}
+
+const fmtS=s=>s<60?s+" ث":Math.floor(s/60)+" د "+(s%60)+" ث";
+function dash(cid,redraw){
+  if(!$("#dcv")||redraw){
+    $("#dash").innerHTML='<div class="c" style="background:#0b1f4d;border-color:#1f4fb4"><div class="r" style="flex-wrap:wrap;margin-bottom:10px"><select id="dl" style="padding:8px;border-radius:9px;border:1px solid var(--bd);font:inherit"><option value="10">أعلى 10</option><option value="20">أعلى 20</option><option value="0">كل اللي خلّصوا</option></select><button id="dsv" class="g">⬇ تنزيل كصورة PNG</button>'+(navigator.canShare?'<button id="dsh" class="s">مشاركة</button>':"")+'<button id="dx" class="s">إخفاء</button></div><canvas id="dcv" style="width:100%;height:auto;border-radius:12px;display:block"></canvas></div>';
+    $("#dl").onchange=()=>paint(cid);
+    $("#dx").onclick=()=>{$("#dash").innerHTML=""};
+    const blob=()=>new Promise(ok=>$("#dcv").toBlob(ok,"image/png")),nm=()=>(contests.find(x=>x.id===cid)?.title||"results")+"-dashboard.png";
+    $("#dsv").onclick=async()=>{const b=await blob(),a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=nm();a.click()};
+    if($("#dsh"))$("#dsh").onclick=async()=>{const f=new File([await blob()],nm(),{type:"image/png"});if(navigator.canShare({files:[f]}))try{await navigator.share({files:[f]})}catch(e){}else alert("المشاركة مش مدعومة هنا، نزّل الصورة.")};
+  }
+  paint(cid);
+}
+async function paint(cid){
+  const c=contests.find(x=>x.id===cid),cv=$("#dcv");if(!c||!cv)return;
+  try{await document.fonts.load("700 20px Cairo");await document.fonts.load("400 16px Cairo")}catch(e){}
+  const GOLD="#e3b94f",MU="#9fb0d6",MED=[GOLD,"#c9d2e3","#cd8f5a"];
+  const rs=rowsOf(cid),done=rs.filter(x=>x.score!=null),opened=rs.filter(x=>x.score==null&&x.startedAt).length,idle=rs.length-done.length-opened;
+  const lim=+$("#dl").value,list=lim?done.slice(0,lim):done;
+  const W=1200,rankH=80+Math.max(1,list.length)*52+16,H=650+rankH+60,S=2;
+  cv.width=W*S;cv.height=H*S;
+  const g=cv.getContext("2d");g.scale(S,S);
+  const T=(t,x,y,o={})=>{g.font=(o.w||400)+" "+(o.s||16)+"px Cairo,Tahoma,sans-serif";g.fillStyle=o.c||"#fff";g.textAlign=o.a||"right";g.textBaseline="middle";g.direction="rtl";let u=String(t);if(o.m&&g.measureText(u).width>o.m){while(u.length>1&&g.measureText(u+"…").width>o.m)u=u.slice(0,-1);u=u.trimEnd()+"…"}g.fillText(u,x,y)};
+  const R=(x,y,w,h,r,f,st)=>{g.beginPath();g.moveTo(x+r,y);g.arcTo(x+w,y,x+w,y+h,r);g.arcTo(x+w,y+h,x,y+h,r);g.arcTo(x,y+h,x,y,r);g.arcTo(x,y,x+w,y,r);g.closePath();if(f){g.fillStyle=f;g.fill()}if(st){g.strokeStyle=st;g.lineWidth=1.2;g.stroke()}};
+  const nf=n=>Number.isInteger(n)?String(n):n.toFixed(1);
+  const bg=g.createLinearGradient(0,0,W,H);bg.addColorStop(0,"#0b1f4d");bg.addColorStop(.5,"#163a85");bg.addColorStop(1,"#0d2a63");
+  g.fillStyle=bg;g.fillRect(0,0,W,H);
+  const PN="rgba(255,255,255,.07)",PB="rgba(227,185,79,.35)";
+  // header
+  T("كنيسة العذراء وأبي سيفين · مطرانية شبرا الخيمة",1152,46,{s:18,w:700,c:GOLD});
+  T(c.title,1152,98,{s:42,w:700,m:900});
+  T("لوحة النتائج · "+fmtD(Date.now()),1152,138,{s:16,c:MU});
+  g.fillStyle=GOLD;R(60,56,16,62,3,GOLD);R(37,79,62,16,3,GOLD);
+  g.beginPath();g.arc(68,87,48,0,7);g.strokeStyle="rgba(227,185,79,.5)";g.lineWidth=2;g.stroke();
+  g.fillStyle=GOLD;g.fillRect(48,160,1104,2);
+  // KPIs
+  const avg=done.length?done.reduce((a,x)=>a+x.score,0)/done.length:null,pct=rs.length?Math.round(done.length/rs.length*100):0;
+  const K=[["المشاركين",rs.length,(done.length+opened)+" فتحوا اللينك"],["خلّصوا",done.length,pct+"% من المشاركين"],["متوسط الدرجة",avg==null?"-":nf(Math.round(avg*10)/10),"من "+done.length+" نتيجة"],["أعلى درجة",done.length?nf(done[0].score):"-",done.length?done[0].name||"":"-"]];
+  K.forEach((k,i)=>{const w=261,x=1152-(i+1)*w-i*20;R(x,185,w,120,16,PN,PB);T(k[0],x+w-20,215,{s:16,c:MU});T(k[1],x+w-20,257,{s:44,w:700,c:i===1?"#3ecf8e":"#fff"});T(k[2],x+w-20,288,{s:14,c:MU,m:w-40})});
+  // podium
+  const y0=325,h0=300;
+  R(432,y0,720,h0,18,PN,PB);T("المتصدرين",1128,y0+36,{s:22,w:700,c:GOLD});
+  if(!done.length)T("لسه مفيش نتايج",792,y0+160,{a:"center",s:22,c:MU});
+  else{
+    const yb=y0+h0-24,P=[[2,916,170],[1,692,200],[3,468,150]];
+    P.forEach(([rk,x,h])=>{const d=done[rk-1];if(!d)return;const ty=yb-h,cw=200;
+      R(x,ty,cw,h,16,rk===1?"rgba(227,185,79,.2)":"rgba(255,255,255,.08)",rk===1?GOLD:"rgba(255,255,255,.2)");
+      g.beginPath();g.arc(x+cw/2,ty+30,18,0,7);g.fillStyle=MED[rk-1];g.fill();T(rk,x+cw/2,ty+31,{a:"center",s:20,w:700,c:"#0b1f4d"});
+      T(d.name||"-",x+cw/2,yb-h+(h-84)+0,{a:"center",s:21,w:700,m:cw-24});
+      T(nf(d.score),x+cw/2,ty+h-44,{a:"center",s:38,w:700,c:GOLD});
+      T(d.startedAt?fmtS(Math.round((d.finishedAt-d.startedAt)/1000)):"",x+cw/2,ty+h-16,{a:"center",s:14,c:MU})});
+  }
+  // donut
+  R(48,y0,360,h0,18,PN,PB);T("حالة المشاركين",388,y0+36,{s:22,w:700,c:GOLD});
+  const cx=228,cy=y0+142,rad=78,seg=[[done.length,"#3ecf8e","خلّصوا"],[opened,"#4f8cff","فتحوا"],[idle,"#5d6b8c","لسه"]],tot=rs.length;
+  g.lineWidth=26;g.lineCap="butt";
+  if(!tot){g.beginPath();g.arc(cx,cy,rad,0,7);g.strokeStyle="#5d6b8c";g.stroke()}
+  else{let a=-Math.PI/2;seg.forEach(([n,col])=>{if(!n)return;const e=a+n/tot*Math.PI*2;g.beginPath();g.arc(cx,cy,rad,a,e);g.strokeStyle=col;g.stroke();a=e})}
+  T(pct+"%",cx,cy-8,{a:"center",s:34,w:700});T("خلّصوا",cx,cy+24,{a:"center",s:15,c:MU});
+  seg.forEach(([n,col,l],i)=>{const lx=cx+(1-i)*115;g.beginPath();g.arc(lx,y0+h0-50,6,0,7);g.fillStyle=col;g.fill();T(l+" "+n,lx,y0+h0-26,{a:"center",s:15})});
+  // ranking
+  const ry=650;R(48,ry,1104,rankH,18,PN,PB);
+  T("الترتيب"+(lim&&done.length>lim?" (أعلى "+lim+")":""),1128,ry+38,{s:22,w:700,c:GOLD});
+  if(rs.length>done.length)T((rs.length-done.length)+" لسه ما خلّصوش",72,ry+38,{a:"left",s:15,c:MU});
+  if(!list.length)T("لسه مفيش نتايج",600,ry+106,{a:"center",s:18,c:MU});
+  const mx=Math.max(1,...list.map(x=>x.score));
+  list.forEach((d,i)=>{const y=ry+80+i*52,m=y+26;
+    if(i%2===0)R(64,y+3,1072,46,10,"rgba(255,255,255,.05)");
+    g.beginPath();g.arc(1104,m,16,0,7);g.fillStyle=MED[i]||"rgba(255,255,255,.14)";g.fill();T(i+1,1104,m+1,{a:"center",s:17,w:700,c:i<3?"#0b1f4d":"#fff"});
+    T(d.name||"-",1072,m,{s:20,w:i<3?700:400,m:300});
+    R(300,m-7,460,14,7,"rgba(255,255,255,.1)");
+    const fw=Math.max(10,d.score/mx*460),gr=g.createLinearGradient(760-fw,0,760,0);
+    if(i<3){gr.addColorStop(0,"#b98a1e");gr.addColorStop(1,GOLD)}else{gr.addColorStop(0,"#2a5fd0");gr.addColorStop(1,"#4f8cff")}
+    R(760-fw,m-7,fw,14,7,gr);
+    T(nf(d.score),290,m,{a:"right",s:22,w:700,c:i<3?GOLD:"#fff"});
+    T(d.startedAt?fmtS(Math.round((d.finishedAt-d.startedAt)/1000)):"",80,m,{a:"left",s:15,c:MU})});
+  T("كنيسة العذراء وأبي سيفين — مطرانية شبرا الخيمة",W/2,H-28,{a:"center",s:15,c:MU});
 }
 </script></body></html>
