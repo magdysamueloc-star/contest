@@ -76,6 +76,15 @@ function probe(cfg){
 }
 const wrap=(h,log,rec)=>{const cfg=JSON.stringify({log:log||[],rec:!!rec}).replace(/</g,"\\u003c"),S="<script>("+probe.toString()+")("+cfg+")<\/script>";return /<\/body>/i.test(h)?h.replace(/<\/body>/i,()=>S+"</body>"):h+S};
 
+if(hash.startsWith("p-"))participant(hash.slice(2));
+else onAuthStateChanged(auth,async u=>{
+  if(!u){app.innerHTML='<div class="c"><h2>دخول الخدام</h2><p><button id="in">دخول بجوجل</button></p></div>';$("#in").onclick=()=>signInWithPopup(auth,new GoogleAuthProvider());return}
+  let ok=u.email===SUPER;
+  if(!ok){try{ok=(await getDoc(doc(db,"allowed",u.email))).exists()}catch(e){}}
+  if(ok)organizer(u);
+  else msg("حسابك لسه مش مفعّل","ابعت الإيميل ده للمسؤول عشان يفعّله: "+esc(u.email));
+});
+
 /* ---------- المشارك ---------- */
 async function participant(code){
   try{
