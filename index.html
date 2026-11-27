@@ -16,6 +16,8 @@ textarea,input[type=text]{width:100%;box-sizing:border-box;background:var(--bg);
 #drop.o{background:var(--bg)}
 .t{overflow-x:auto}table{border-collapse:collapse;width:100%}th,td{padding:6px 8px;border-bottom:1px solid var(--bd);text-align:right;white-space:nowrap}
 .mu{color:var(--mu);font-size:14px}pre{direction:ltr;text-align:left;background:var(--bg);padding:8px;border-radius:8px;overflow-x:auto;font-size:12px}
+.r{display:flex;gap:8px;margin-bottom:6px}.r input:first-child{flex:1}.r input:last-child{flex:1;direction:ltr;text-align:left}
+details{margin:8px 0}
 iframe{width:100%;height:80vh;border:1px solid var(--bd);border-radius:12px;background:#fff}
 </style></head><body><main id="app"><p class="mu">جاري التحميل…</p></main>
 <script type="module">
@@ -76,13 +78,14 @@ function organizer(){
    <p id="cs" class="mu"></p>
    <p class="mu">لازم المسابقة في آخرها تبعت النتيجة بالسطر ده:</p>
    <pre>parent.postMessage({type:"score", score: 8}, "*");</pre></div>
-  <div class="c"><h2>٢) الأرقام</h2>
-   <textarea id="nums" rows="5" placeholder="رقم في كل سطر، أو: الاسم,الرقم&#10;أحمد,201001234567"></textarea>
-   <p class="mu">الرقم بكود الدولة (20 لمصر) من غير + أو صفر في الأول.</p>
-   <textarea id="msg" rows="2">أهلاً {name}، دي مسابقتك. اللينك بيتفتح مرة واحدة بس: {link}</textarea>
-   <p><button id="gen">إنشاء الأكواد</button></p></div>
+  <div class="c"><h2>٢) الأسماء والأرقام</h2>
+   <div id="rowsin"></div>
+   <p><button id="addr" class="s">+ إضافة صف</button></p>
+   <p class="mu">الرقم بكود الدولة (20 لمصر) من غير + أو صفر في الأول. مثال: 201001234567</p>
+   <details><summary class="mu">تعديل نص الرسالة</summary><textarea id="msg" rows="2">أهلاً {name}، دي مسابقتك. اللينك بيتفتح مرة واحدة بس: {link}</textarea></details>
+   <p><button id="gen">حفظ الأسماء وتجهيز اللينكات</button></p></div>
   <div class="c"><h2>٣) المشاركين والترتيب</h2>
-   <p><button id="csv" class="s">تصدير CSV</button> <button id="rf" class="s">تحديث</button> <button id="out" class="s">خروج</button></p>
+   <p><button id="all">إرسال للكل</button> <button id="csv" class="s">تصدير CSV</button> <button id="rf" class="s">تحديث</button> <button id="out" class="s">خروج</button></p>
    <div class="t"><table id="tb"></table></div></div>`;
   const setFile=async f=>{if(!f)return;const html=await f.text();
     try{await setDoc(doc(db,"contest","main"),{html,title:f.name,at:Date.now()});$("#cs").textContent="تم حفظ: "+f.name}
@@ -93,16 +96,30 @@ function organizer(){
   dr.ondragleave=()=>dr.classList.remove("o");
   dr.ondrop=e=>{e.preventDefault();dr.classList.remove("o");setFile(e.dataTransfer.files[0])};
   getDoc(doc(db,"contest","main")).then(s=>{if(s.exists())$("#cs").textContent="المسابقة الحالية: "+(s.data().title||"")});
-  $("#gen").onclick=gen;$("#rf").onclick=load;$("#csv").onclick=csv;$("#out").onclick=()=>signOut(auth);load();
+  initRows();$("#addr").onclick=()=>addRow();$("#gen").onclick=gen;$("#all").onclick=sendNext;$("#rf").onclick=load;$("#csv").onclick=csv;$("#out").onclick=()=>signOut(auth);load();
 }
 const rnd=()=>Array.from(crypto.getRandomValues(new Uint8Array(8)),b=>"abcdefghjkmnpqrstuvwxyz23456789"[b%31]).join("");
+function addRow(){const d=document.createElement("div");d.className="r";d.innerHTML='<input type="text" placeholder="الاسم"><input type="text" placeholder="الرقم 201001234567" inputmode="numeric">';$("#rowsin").appendChild(d)}
+function initRows(){$("#rowsin").innerHTML="";for(let i=0;i<5;i++)addRow()}
 async function gen(){
-  for(const l of $("#nums").value.split("\n").map(x=>x.trim()).filter(Boolean)){
-    const p=l.split(/[,،\t]/).map(x=>x.trim()),phone=(p.pop()||"").replace(/\D/g,""),name=p.join(" ");
+  for(const r of document.querySelectorAll("#rowsin .r")){
+    const [n,p]=r.querySelectorAll("input"),phone=p.value.replace(/\D/g,""),name=n.value.trim();
     if(phone.length<8)continue;
     await setDoc(doc(db,"codes",rnd()),{phone,name,createdAt:Date.now(),score:null});
   }
-  $("#nums").value="";load();
+  initRows();load();
+}
+const waLink=c=>"https://wa.me/"+c.phone+"?text="+encodeURIComponent($("#msg").value.replace("{name}",c.name||"").replace("{link}",BASE+"#p-"+c.id));
+async function sendTo(id){
+  const c=rows.find(x=>x.id===id);if(!c)return;
+  window.open(waLink(c),"_blank");
+  try{await updateDoc(doc(db,"codes",id),{sentAt:Date.now()})}catch(e){}
+  load();
+}
+function sendNext(){
+  const c=rows.find(x=>!x.sentAt&&!x.startedAt);
+  if(!c){alert("كله اتبعت");return}
+  sendTo(c.id);
 }
 async function load(){
   const [cs,cl]=await Promise.all([getDocs(collection(db,"codes")),getDocs(collection(db,"claims"))]);
@@ -110,13 +127,15 @@ async function load(){
   rows=cs.docs.map(d=>({id:d.id,...d.data(),startedAt:started[d.id]}));
   rows.sort((a,b)=>(b.score??-1)-(a.score??-1)||((a.finishedAt-a.startedAt)||1e15)-((b.finishedAt-b.startedAt)||1e15));
   let rank=0;
+  const left=rows.filter(x=>!x.sentAt&&!x.startedAt).length;
+  $("#all").textContent=left?"إرسال التالي ("+left+" متبقي)":"إرسال للكل";
   $("#tb").innerHTML="<tr><th>#</th><th>الاسم</th><th>الرقم</th><th>الحالة</th><th>الدرجة</th><th>الزمن</th><th>واتساب</th></tr>"+rows.map(c=>{
-    const done=c.score!=null,st=done?"خلّص":c.startedAt?"فتح":"لسه";
+    const done=c.score!=null,st=done?"خلّص":c.startedAt?"فتح":c.sentAt?"اتبعت":"لسه";
     const t=done&&c.startedAt?Math.round((c.finishedAt-c.startedAt)/1000)+" ث":"-";
-    const m=$("#msg").value.replace("{name}",c.name||"").replace("{link}",BASE+"#p-"+c.id);
-    const wa="https://wa.me/"+c.phone+"?text="+encodeURIComponent(m);
-    return "<tr><td>"+(done?++rank:"-")+"</td><td>"+esc(c.name)+"</td><td dir=ltr>"+esc(c.phone)+"</td><td>"+st+"</td><td>"+(done?esc(c.score):"-")+"</td><td>"+t+"</td><td>"+(c.startedAt?"":'<a class="b" target="_blank" rel="noopener" href="'+wa+'">إرسال</a>')+"</td></tr>";
+    const btn=c.startedAt?"":'<button class="'+(c.sentAt?"s":"")+'" data-id="'+c.id+'">'+(c.sentAt?"إعادة":"إرسال")+"</button>";
+    return "<tr><td>"+(done?++rank:"-")+"</td><td>"+esc(c.name)+"</td><td dir=ltr>"+esc(c.phone)+"</td><td>"+st+"</td><td>"+(done?esc(c.score):"-")+"</td><td>"+t+"</td><td>"+btn+"</td></tr>";
   }).join("");
+  $("#tb").onclick=e=>{const id=e.target.dataset?.id;if(id)sendTo(id)};
 }
 function csv(){
   const r=[["rank","name","phone","code","score","seconds"]];let k=0;
